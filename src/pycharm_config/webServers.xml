@@ -1,0 +1,14 @@
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="b0bf973e-3a5b-400c-8dae-517eb547ce40" name="hello2" url="http://root@systest-sca-linux05">
+        <fileTransfer accessType="SFTP" host="root@systest-sca-linux05" port="22">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
