@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name = "decade",
-    version = "0.0.1",
-    keywords = ("pip", "decade", "debug-auto-config", "rzhu"),
+    version = "0.0.4",
+    keywords = ("pip", "decade", "rzhu"),
     description = "debug configurator sdk",
     long_description = "Pycharm remote debug auto configurator sdk",
     license = "Splunk Licence",
 
-    url = "http://xiaoh.me",
+    url = "https://github.com/CarolineZhu/decade",
     author = "rzhu",
     author_email = "rzhu@splunk.com",
 
@@ -16,4 +16,7 @@ setup(
     include_package_data = True,
     platforms = "any",
     install_requires = ["paramiko"]
+    # entry_points = {
+    #     'console_scripts': ['decade=src:main'],
+    # }
 )
