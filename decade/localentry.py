@@ -118,9 +118,7 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
                                 mapping.set('remote-root', remote_path)
     workspace_config.write(local_path + '/.idea/workspace.xml')
 
-
-
-if __name__ == "__main__":
+def main():
     args = parse_args()
     remote_path = args.remote_path
     serverName = args.server_name
@@ -175,8 +173,12 @@ if __name__ == "__main__":
     msg = raw_input("Enter r if debug server started:")
     assert msg == 'r'
 
-    run_remote_cmd = 'python ' + remote_path + '/remoteentry.py' + ' --remote-path ' + remote_path + ' --src-entry ' + args.src_entry + ' --local-ip ' + local_ip + ' --local-port ' + str(local_port)
+    run_remote_cmd = 'python ' + remote_path + '/remoteentry.py' + ' --remote-path ' + remote_path + ' --src-entry ' + args.src_entry + ' --local-ip ' + local_ip + ' --local-port ' + str(
+        local_port)
     # run_remote_cmd = ['python', 'remoteentry.py', '--remote-path', remote_path, '--src-entry', args.src_entry,
     #                   '--local-ip', local_ip, '--local-port', str(local_port)]
     remote_client.exec_command(run_remote_cmd)
+
+if __name__ == "__main__":
+    main()
 
