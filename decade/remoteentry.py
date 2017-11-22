@@ -18,5 +18,4 @@ if __name__ == "__main__":
     args = parse_args()
     pydevd.settrace(args.local_ip, port=args.local_port, stdoutToServer=True, stderrToServer=True)
     src_code = args.remote_path + '/' + args.src_entry
-    # pydevd.settrace(args.local_ip, port=args.local_port, stdoutToServer=True, stderrToServer=True)
     execfile(src_code)

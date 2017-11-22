@@ -33,8 +33,7 @@ def parse_args():
 
 
 # setup virtualenv
-def virtualenv_setup(remote_path, remote_sftp, remote_client, local_project_path):
-    # new_cmd = ['virtualenv', 'venv']
+def virtualenv_setup(remote_path, remote_client, local_project_path):
     new_cmd = 'virtualenv venv'
     remote_client.exec_command(new_cmd)
 
@@ -42,7 +41,6 @@ def virtualenv_setup(remote_path, remote_sftp, remote_client, local_project_path
     remote_client.exec_command(activate_cmd)
 
     requirements_path = remote_path + '/requirements.txt'
-    # if stat.S_ISDIR(remote_sftp.stat(requirements_path).st_mode):
     if os.path.exists(local_project_path + remote_path + '/requirements.txt'):
         config_cmd = 'pip install -r ' + requirements_path
         remote_client.exec_command(config_cmd)
@@ -77,7 +75,6 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
         os.mkdir(local_path + '/.idea')
 
     # other config files
-    # config_dir = local_project_path + '/root/pycharm_config'
     raw_files = os.listdir('./pycharm_config')
     for f in raw_files:
         file_location = './pycharm_config/' + f
@@ -171,7 +168,7 @@ if __name__ == "__main__":
     local_ide_mkdir_cmd = ['mkdir', '-p', local_project_path + remote_path]
     subprocess.call(local_ide_mkdir_cmd)
     sftp_directory(sftp, remote_path, local_project_path)
-    virtualenv_setup(remote_path, sftp, remote_client, local_project_path)
+    virtualenv_setup(remote_path, remote_client, local_project_path)
 
     # print 'Enter "ready" if debug server started'
     # time.sleep(30)

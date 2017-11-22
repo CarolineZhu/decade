@@ -15,8 +15,8 @@ setup(
     packages = find_packages(),
     include_package_data = True,
     platforms = "any",
-    install_requires = ["paramiko"]
-    # entry_points = {
-    #     'console_scripts': ['decade=src:main'],
-    # }
+    install_requires = ["paramiko"],
+    entry_points = {
+        'console_scripts': ['decade = decade.localentry:main']
+    }
 )
