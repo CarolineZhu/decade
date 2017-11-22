@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "decade",
-    version = "0.0.6",
+    version = "0.0.7",
     keywords = ("pip", "decade", "rzhu"),
     description = "debug configurator sdk",
     long_description = "Pycharm remote debug auto configurator sdk",

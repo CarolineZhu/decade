@@ -162,10 +162,14 @@ def main():
     remote_client.connect(hostname, ssh_port, ssh_user, ssh_password)
 
     sftp = paramiko.SFTPClient.from_transport(remote_client.get_transport())
-    # local_ide_mkdir_cmd = 'mkdir -p ' + local_project_path + remote_path
+
+    sftp.put('remoteentry.py', remote_path + '/remoteentry.py')
+
     local_ide_mkdir_cmd = ['mkdir', '-p', local_project_path + remote_path]
     subprocess.call(local_ide_mkdir_cmd)
+
     sftp_directory(sftp, remote_path, local_project_path)
+
     virtualenv_setup(remote_path, remote_client, local_project_path)
 
     # print 'Enter "ready" if debug server started'
