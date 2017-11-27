@@ -4,7 +4,7 @@ import subprocess
 import paramiko
 import xml.etree.ElementTree as et
 import argparse
-import time
+import pkgutil
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -74,10 +74,14 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
     if not os.path.exists(local_path + '/.idea'):
         os.mkdir(local_path + '/.idea')
 
+    # script_path = sys.path[0]
+    script_path = pkgutil.get_loader("decade").filename
+    print script_path
+
     # other config files
-    raw_files = os.listdir('./pycharm_config')
+    raw_files = os.listdir(script_path + '/pycharm_config')
     for f in raw_files:
-        file_location = './pycharm_config/' + f
+        file_location = script_path + '/pycharm_config/' + f
         file_name = os.path.splitext(f)[0]
         if file_name == 'workspace' or file_name == 'webServer':
             continue
@@ -85,16 +89,16 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
         edit_config_files(f, file_location, local_path, config_list)
 
     # webServers.xml
-    webservers_config = et.parse('./pycharm_config/webServers.xml')
+    webservers_config = et.parse(script_path + '/pycharm_config/webServers.xml')
     webservers_root = webservers_config.getroot()
     for ele in webservers_root.iter('option'):
         if 'name' in ele.attrib.keys() and ele.get('name') == "port":
             ele.attrib['value'] = str(ssh_port)
-    webservers_config.write('./pycharm_config/webServers.xml')
-    edit_config_files('webServers.xml', './pycharm_config/webServers.xml', local_path, args['webServers'])
+    webservers_config.write(script_path + '/pycharm_config/webServers.xml')
+    edit_config_files('webServers.xml', script_path + '/pycharm_config/webServers.xml', local_path, args['webServers'])
 
     # workspace.xml
-    workspace_config = et.parse('./pycharm_config/workspace.xml')
+    workspace_config = et.parse(script_path + '/pycharm_config/workspace.xml')
     workspace_root = workspace_config.getroot()
     for ele in workspace_root.iter('option'):
         if 'name' in ele.attrib.keys() and ele.get('name') == "myItemId":
@@ -163,7 +167,7 @@ def main():
 
     sftp = paramiko.SFTPClient.from_transport(remote_client.get_transport())
 
-    sftp.put('remoteentry.py', remote_path + '/remoteentry.py')
+    sftp.put(pkgutil.get_loader("decade").filename + '/remoteentry.py', remote_path + '/remoteentry.py')
 
     local_ide_mkdir_cmd = ['mkdir', '-p', local_project_path + remote_path]
     subprocess.call(local_ide_mkdir_cmd)
