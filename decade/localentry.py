@@ -91,7 +91,7 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
     for f in raw_files:
         file_location = script_path + '/pycharm_config/' + f
         file_name = os.path.splitext(f)[0]
-        if file_name == 'workspace' or file_name == 'webServer':
+        if file_name == 'workspace' or file_name == 'webServer' or file_name == 'try':
             continue
         config_list = args[file_name]
         edit_config_files(f, file_location, local_path, config_list)
@@ -130,6 +130,10 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
                                 mapping.set('remote-root', remote_path)
     workspace_config.write(local_path + '/.idea/workspace.xml')
 
+    # iml
+    shutil.copyfile(script_path + '/pycharm_config/try.iml', local_path + '/.idea/' + project_name + '.iml')
+
+
 def main():
     args = parse_args()
     remote_path = args.remote_path
@@ -144,7 +148,7 @@ def main():
     local_project_path = args.local_path
     local_ip = args.local_ip
     local_port = args.local_port
-    projectName = local_project_path.split('/')[-1]
+    project_name = local_project_path.split('/')[-1]
     url = ssh_user + '@' + hostname + ':' + str(ssh_port)
 
     ideConfig = {
@@ -167,7 +171,7 @@ def main():
              'attrib': {'host': ssh_user + '@' + hostname, 'port': str(ssh_port), 'accessType': 'SFTP'}}
         ],
     }
-    IDE_config(ideConfig, remote_path, projectName, local_project_path, local_ip, local_port, ssh_port)
+    IDE_config(ideConfig, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
     remote_client = paramiko.SSHClient()
     remote_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

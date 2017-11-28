@@ -1,1 +1,2 @@
 recursive-include decade/pycharm_config *.xml
+recursive-include decade/pycharm_config *.iml
