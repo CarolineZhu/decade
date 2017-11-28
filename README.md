@@ -21,7 +21,8 @@ decade --remote-path=<remote_path> --src-entry=<src_code> --server-name=<server_
 - `<ssh_user>`: remote client ssh user
 - `<ssh_password>`: remote client ssh password
 - `<ssh_port>`(optional, default 22): remote client ssh port
-- `<local_path>`: project path on local server(Usually create an empty folder to contain the remote project)
+- `<download>`(optional, store true): add if want to download the whole project to local. 
+- `<local_path>`: project path on local server(Create an empty folder to contain the remote project if downloading the whole project, or use the local project path)
 - `<local_ip>`: local server ip address
 - `<local_port>`: local server remote debug port(Any unoccupied port is ok)
 

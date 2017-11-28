@@ -54,11 +54,11 @@
         <subPane>
           <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="try3" />
+              <option name="myItemId" value="try" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="try3" />
+              <option name="myItemId" value="try" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -83,10 +83,10 @@
     </option>
   </component>
   <component name="RunManager" selected="Python Remote Debug.Unnamed4">
-    <configuration default="false" name="Unnamed4" type="PyRemoteDebugConfigurationType" factoryName="Python Remote Debug">
+    <configuration default="false" name="Unnamed" type="PyRemoteDebugConfigurationType" factoryName="Python Remote Debug">
       <module name="" />
       <option name="PORT" value="52001" />
-      <option name="HOST" value="10.66.4.54" />
+      <option name="HOST" value="0.0.0.0" />
       <PathMappingSettings>
         <option name="pathMappings">
           <list>

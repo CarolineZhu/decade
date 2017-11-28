@@ -1,10 +1,11 @@
-import os
+import os, sys
 import stat
 import subprocess
 import paramiko
 import xml.etree.ElementTree as et
 import argparse
 import pkgutil
+import shutil
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -28,6 +29,10 @@ def parse_args():
                         help="local server ip address")
     parser.add_argument("--local-port", type=int,
                         help="local server remote debug port, any unoccupied port is ok")
+    parser.add_argument("--download",
+                       help="download the whole source code of the project",
+                       action='store_true',
+                       default=False)
     arguments = parser.parse_args()
     return arguments
 
@@ -72,6 +77,9 @@ def edit_config_files(f, file_location, local_path, args_list):
 def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
 
     if not os.path.exists(local_path + '/.idea'):
+        os.mkdir(local_path + '/.idea')
+    else:
+        shutil.rmtree(local_path + '/.idea')
         os.mkdir(local_path + '/.idea')
 
     # script_path = sys.path[0]
@@ -169,10 +177,14 @@ def main():
 
     sftp.put(pkgutil.get_loader("decade").filename + '/remoteentry.py', remote_path + '/remoteentry.py')
 
-    local_ide_mkdir_cmd = ['mkdir', '-p', local_project_path + remote_path]
-    subprocess.call(local_ide_mkdir_cmd)
+    if args.download:
+        local_ide_mkdir_cmd = ['mkdir', '-p', local_project_path + remote_path]
+        subprocess.call(local_ide_mkdir_cmd)
 
-    sftp_directory(sftp, remote_path, local_project_path)
+        sftp_directory(sftp, remote_path, local_project_path)
+
+    elif not os.path.exists(local_project_path + remote_path + '/remoteentry.py'):
+        sftp.get(remote_path + '/remoteentry.py', local_project_path + remote_path + '/remoteentry.py')
 
     virtualenv_setup(remote_path, remote_client, local_project_path)
 

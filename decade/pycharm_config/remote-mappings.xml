@@ -3,7 +3,7 @@
   <component name="RemoteMappingsManager">
     <list>
       <list>
-        <remote-mappings server-id="python@ssh://root@systest-sca-linux05:22/usr/bin/python">
+        <remote-mappings server-id="python@ssh://root@0.0.0.0:22/usr/bin/python">
           <settings>
             <list>
               <mapping local-root="$PROJECT_DIR$/root/hello" remote-root="/root/hello" />
