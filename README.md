@@ -9,6 +9,11 @@ Decade makes this process fully automatic.This project was started and maintaine
 
 ### Getting started
 
+To install decade:
+```
+pip install decade
+```
+
 To start a decade:
 ```
 decade --remote-path=<remote_path> --src-entry=<src_code> --server-name=<server_name> --hostname=<hostname> --ssh-user=<ssh_user> --ssh-password=<ssh_password> --ssh-port=<ssh_port> --local-path=<local_path> --local-ip=<local_ip> --local-port=<local_port>
