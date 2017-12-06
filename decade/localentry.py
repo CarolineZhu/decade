@@ -36,7 +36,7 @@ def parse_args():
 
 
 # setup virtualenv
-def virtualenv_setup(remote_path, client, local_project_path):
+def setup_virtualenv(remote_path, client, local_project_path):
     new_cmd = 'virtualenv venv'
     client.execute(new_cmd)
 
@@ -59,7 +59,7 @@ def edit_config_files(f, file_location, local_path, args_list):
     init_config.write(os.path.join(local_path, '.idea', f))
 
 
-def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
+def config_IDE(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
     local_idea_path = os.path.join(local_path, '.idea')
     if not os.path.exists(local_idea_path):
         os.mkdir(local_idea_path)
@@ -124,7 +124,7 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
 def main():
     args = parse_args()
     remote_path = args.remote_path
-    serverName = args.server_name
+    server_name = args.server_name
 
     hostname = args.hostname
     ssh_user = args.ssh_user
@@ -137,10 +137,10 @@ def main():
     project_name = os.path.split(local_project_path)[-1]
     url = ssh_user + '@' + hostname + ':' + str(ssh_port)
 
-    ideConfig = {
+    ide_config = {
         "deployment": [
-            {'tag': 'component', 'attrib': {'serverName': serverName}},
-            {'tag': 'paths', 'attrib': {'name': serverName}},
+            {'tag': 'component', 'attrib': {'serverName': server_name}},
+            {'tag': 'paths', 'attrib': {'name': server_name}},
             {'tag': 'mapping', 'attrib': {'deploy': remote_path, 'local': '$PROJECT_DIR$' + remote_path}}
         ],
         "misc": [
@@ -152,7 +152,7 @@ def main():
             {'tag': 'mapping', 'attrib': {'local-root': '$PROJECT_DIR$' + remote_path, 'remote-root': remote_path}},
         ],
         "webServers": [
-            {'tag': 'webServer', 'attrib': {'name': serverName, 'url': 'http://' + ssh_user + '@' + hostname}},
+            {'tag': 'webServer', 'attrib': {'name': server_name, 'url': 'http://' + ssh_user + '@' + hostname}},
             {'tag': 'fileTransfer',
              'attrib': {'host': ssh_user + '@' + hostname, 'port': str(ssh_port), 'accessType': 'SFTP'}}
         ],
@@ -170,9 +170,9 @@ def main():
         client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
                            os.path.join(local_project_path, _REMOTE_ENTRY))
 
-    IDE_config(ideConfig, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
+    config_IDE(ide_config, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
-    virtualenv_setup(remote_path, client, local_project_path)
+    setup_virtualenv(remote_path, client, local_project_path)
 
     # todo: use a loop and verify until the server is ready
     msg = raw_input(

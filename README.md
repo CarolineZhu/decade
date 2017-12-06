@@ -63,6 +63,6 @@ Go for debugging!
 - Use `open -a PyCharm <project_path>` to open the PyCharm after script running
 - Support remote debugging in docker containers
 - Add unit test
-- Use os.path.join instead of `+`
+- ~~Use os.path.join instead of `+`~~
 - Use git to make sure the local code is the latest version (if local-path is exist)
 - Remove --download option, and download the code automatically if the local-path is not exist
