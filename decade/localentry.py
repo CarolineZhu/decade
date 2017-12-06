@@ -6,6 +6,8 @@ import xml.etree.ElementTree as et
 import argparse
 import pkgutil
 import shutil
+from common import get_host_ip, get_unoccupied_port
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -25,10 +27,6 @@ def parse_args():
                         help="remote client ssh port", type=int, default=22)
     parser.add_argument("--local-path",
                         help="project path on local server")
-    parser.add_argument("--local-ip",
-                        help="local server ip address")
-    parser.add_argument("--local-port", type=int,
-                        help="local server remote debug port, any unoccupied port is ok")
     parser.add_argument("--download",
                        help="download the whole source code of the project",
                        action='store_true',
@@ -146,8 +144,8 @@ def main():
 
     python_package = remote_path + '/venv/bin/python'
     local_project_path = args.local_path
-    local_ip = args.local_ip
-    local_port = args.local_port
+    local_ip = get_host_ip()
+    local_port = get_unoccupied_port()
     project_name = local_project_path.split('/')[-1]
     url = ssh_user + '@' + hostname + ':' + str(ssh_port)
 
