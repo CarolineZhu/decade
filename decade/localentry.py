@@ -7,6 +7,7 @@ import argparse
 import pkgutil
 import shutil
 from common import get_host_ip, get_unoccupied_port
+from client import Client
 
 
 def parse_args():
@@ -36,30 +37,17 @@ def parse_args():
 
 
 # setup virtualenv
-def virtualenv_setup(remote_path, remote_client, local_project_path):
+def virtualenv_setup(remote_path, client, local_project_path):
     new_cmd = 'virtualenv venv'
-    remote_client.exec_command(new_cmd)
+    client.execute(new_cmd)
 
     activate_cmd = 'source ./venv/bin/activate'
-    remote_client.exec_command(activate_cmd)
+    client.execute(activate_cmd)
 
     requirements_path = remote_path + '/requirements.txt'
     if os.path.exists(local_project_path + remote_path + '/requirements.txt'):
         config_cmd = 'pip install -r ' + requirements_path
-        remote_client.exec_command(config_cmd)
-
-
-def sftp_directory(remote_sftp, remote_dir, local_dir):
-    for f in remote_sftp.listdir(remote_dir):
-        if stat.S_ISDIR(remote_sftp.stat(remote_dir + '/' + f).st_mode):
-            if not os.path.exists(local_dir + remote_dir + '/' + f):
-                os.mkdir(local_dir + remote_dir + '/' + f)
-            sftp_directory(remote_sftp, remote_dir + '/' + f, local_dir)
-        else:
-            local_file = os.path.join(local_dir + remote_dir, f)
-            subprocess.call(['touch', local_file])
-            remote_sftp.get(remote_dir + '/' + f, local_file)
-    return
+        client.execute(config_cmd)
 
 
 def edit_config_files(f, file_location, local_path, args_list):
@@ -170,24 +158,19 @@ def main():
     }
     IDE_config(ideConfig, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
-    remote_client = paramiko.SSHClient()
-    remote_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    remote_client.connect(hostname, ssh_port, ssh_user, ssh_password)
+    client = Client(args.hostname, args.ssh_user, args.ssh_password, args.ssh_port)
 
-    sftp = paramiko.SFTPClient.from_transport(remote_client.get_transport())
-
-    sftp.put(pkgutil.get_loader("decade").filename + '/remoteentry.py', remote_path + '/remoteentry.py')
+    client.send_files(pkgutil.get_loader("decade").filename + '/remoteentry.py', remote_path + '/remoteentry.py')
 
     if args.download:
         local_ide_mkdir_cmd = ['mkdir', '-p', local_project_path + remote_path]
         subprocess.call(local_ide_mkdir_cmd)
-
-        sftp_directory(sftp, remote_path, local_project_path)
+        client.fetch_files(remote_path, local_project_path)
 
     elif not os.path.exists(local_project_path + remote_path + '/remoteentry.py'):
-        sftp.get(remote_path + '/remoteentry.py', local_project_path + remote_path + '/remoteentry.py')
+        client.fetch_files(remote_path + '/remoteentry.py', local_project_path + remote_path + '/remoteentry.py')
 
-    virtualenv_setup(remote_path, remote_client, local_project_path)
+    virtualenv_setup(remote_path, client, local_project_path)
 
     msg = raw_input(
         "The configuring process finished successfully. Open the project and start the debug server. Enter r if debug server started:")
@@ -195,7 +178,7 @@ def main():
 
     run_remote_cmd = 'python ' + remote_path + '/remoteentry.py' + ' --remote-path ' + remote_path + ' --src-entry ' + args.src_entry + ' --local-ip ' + local_ip + ' --local-port ' + str(
         local_port)
-    remote_client.exec_command(run_remote_cmd)
+    client.execute(run_remote_cmd)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,9 @@
 @contact: cuyu@splunk.com
 @since: 06/12/2017
 """
+import stat
 import docker
+import os
 import paramiko
 
 
@@ -41,7 +43,18 @@ class Client(object):
 
     def fetch_files(self, remote_path, local_path):
         if self._ssh_client:
+            # todo: call self._ssh_fetch_folder is remote_path is a folder
             self._sftp.get(remote_path, local_path)
         else:
             data, stat = self._docker_container.get_archive(remote_path)
             # todo: save the date to local_path and unarchived it
+
+    def _ssh_fetch_folder(self, remote_path, local_path):
+        if not os.path.exists(local_path):
+            os.mkdir(local_path)
+
+        for f in self._sftp.listdir(remote_path):
+            if stat.S_ISDIR(self._sftp.stat(os.path.join(remote_path, f)).st_mode):
+                self._ssh_fetch_folder(os.path.join(remote_path, f), local_path)
+            else:
+                self._sftp.get(os.path.join(remote_path, f), os.path.join(local_path, f))
