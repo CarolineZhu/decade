@@ -28,9 +28,9 @@ def parse_args():
     parser.add_argument("--local-path",
                         help="project path on local server")
     parser.add_argument("--download",
-                       help="download the whole source code of the project",
-                       action='store_true',
-                       default=False)
+                        help="download the whole source code of the project",
+                        action='store_true',
+                        default=False)
     arguments = parser.parse_args()
     return arguments
 
@@ -73,7 +73,6 @@ def edit_config_files(f, file_location, local_path, args_list):
 
 
 def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
-
     if not os.path.exists(local_path + '/.idea'):
         os.mkdir(local_path + '/.idea')
     else:
@@ -190,13 +189,14 @@ def main():
 
     virtualenv_setup(remote_path, remote_client, local_project_path)
 
-    msg = raw_input("The configuring process finished successfully. Open the project and start the debug server. Enter r if debug server started:")
+    msg = raw_input(
+        "The configuring process finished successfully. Open the project and start the debug server. Enter r if debug server started:")
     assert msg == 'r'
 
     run_remote_cmd = 'python ' + remote_path + '/remoteentry.py' + ' --remote-path ' + remote_path + ' --src-entry ' + args.src_entry + ' --local-ip ' + local_ip + ' --local-port ' + str(
         local_port)
     remote_client.exec_command(run_remote_cmd)
 
+
 if __name__ == "__main__":
     main()
-

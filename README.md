@@ -1,6 +1,6 @@
 # decade
 
-> An automatic remote debug configurator for Pycharm.
+> An automatic remote debug configurator for Pycharm (on mac OS).
 
 
 Pycharm provides remote debug function but needs complex configuration process.
@@ -54,3 +54,13 @@ You can set breakpoints in your project as your wish.
 
 Go for debugging!
 
+
+### Todo
+
+- Use env variables to store the local project path (so that we can store config in a shell script, a optional way to use the cmd easier)
+- Use `open -a PyCharm <project_path>` to open the PyCharm after script running
+- Support remote debugging in docker containers
+- Add unit test
+- Use os.path.join instead of `+`
+- Use git to make sure the local code is the latest version (if local-path is exist)
+- Remove --download option, and download the code automatically if the local-path is not exist
