@@ -44,8 +44,8 @@ def virtualenv_setup(remote_path, client, local_project_path):
     activate_cmd = 'source ./venv/bin/activate'
     client.execute(activate_cmd)
 
-    requirements_path = remote_path + '/requirements.txt'
-    if os.path.exists(local_project_path + remote_path + '/requirements.txt'):
+    requirements_path = os.path.join(remote_path, 'requirements.txt')
+    if os.path.exists(os.path.join(local_project_path, remote_path, 'requirements.txt')):
         config_cmd = 'pip install -r ' + requirements_path
         client.execute(config_cmd)
 
@@ -57,24 +57,25 @@ def edit_config_files(f, file_location, local_path, args_list):
         for ele in root.iter(item['tag']):
             for attrib_key in item['attrib'].keys():
                 ele.set(attrib_key, item['attrib'][attrib_key])
-    init_config.write(local_path + '/.idea/' + f)
+    init_config.write(os.path.join(local_path, '.idea/', f))
 
 
 def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
-    if not os.path.exists(local_path + '/.idea'):
-        os.mkdir(local_path + '/.idea')
+    local_idea_path = os.path.join(local_path, '.idea')
+    if not os.path.exists(local_idea_path):
+        os.mkdir(local_idea_path)
     else:
-        shutil.rmtree(local_path + '/.idea')
-        os.mkdir(local_path + '/.idea')
+        shutil.rmtree(local_idea_path)
+        os.mkdir(local_idea_path)
 
-    # script_path = sys.path[0]
     script_path = pkgutil.get_loader("decade").filename
     print script_path
 
     # other config files
-    raw_files = os.listdir(script_path + '/pycharm_config')
+    pycharm_config_dir = os.path.join(script_path, 'pycharm_config')
+    raw_files = os.listdir(pycharm_config_dir)
     for f in raw_files:
-        file_location = script_path + '/pycharm_config/' + f
+        file_location = os.path.join(pycharm_config_dir, f)
         file_name = os.path.splitext(f)[0]
         if file_name == 'workspace' or file_name == 'webServer' or file_name == 'try':
             continue
@@ -82,16 +83,17 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
         edit_config_files(f, file_location, local_path, config_list)
 
     # webServers.xml
-    webservers_config = et.parse(script_path + '/pycharm_config/webServers.xml')
+    webservers_config = et.parse(os.path.join(pycharm_config_dir, 'webServers.xml'))
     webservers_root = webservers_config.getroot()
     for ele in webservers_root.iter('option'):
         if 'name' in ele.attrib.keys() and ele.get('name') == "port":
             ele.attrib['value'] = str(ssh_port)
-    webservers_config.write(script_path + '/pycharm_config/webServers.xml')
-    edit_config_files('webServers.xml', script_path + '/pycharm_config/webServers.xml', local_path, args['webServers'])
+    webservers_config.write(os.path.join(pycharm_config_dir, 'webServers.xml'))
+    edit_config_files('webServers.xml', os.path.join(pycharm_config_dir, 'webServers.xml'), local_path,
+                      args['webServers'])
 
     # workspace.xml
-    workspace_config = et.parse(script_path + '/pycharm_config/workspace.xml')
+    workspace_config = et.parse(os.path.join(pycharm_config_dir, 'workspace.xml'))
     workspace_root = workspace_config.getroot()
     for ele in workspace_root.iter('option'):
         if 'name' in ele.attrib.keys() and ele.get('name') == "myItemId":
@@ -113,10 +115,11 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
                             for mapping in option.iter('mapping'):
                                 mapping.set('local-root', '$PROJECT_DIR$' + remote_path)
                                 mapping.set('remote-root', remote_path)
-    workspace_config.write(local_path + '/.idea/workspace.xml')
+    workspace_config.write(os.path.join(local_path, 'idea', 'workspace.xml'))
 
     # iml
-    shutil.copyfile(script_path + '/pycharm_config/try.iml', local_path + '/.idea/' + project_name + '.iml')
+    shutil.copyfile(os.path.join(pycharm_config_dir, 'try.iml'),
+                    os.path.join(local_path, '.idea', project_name + '.iml'))
 
 
 def main():
@@ -129,11 +132,11 @@ def main():
     ssh_password = args.ssh_password
     ssh_port = args.ssh_port
 
-    python_package = remote_path + '/venv/bin/python'
+    python_package = os.path.join(remote_path, 'venv/bin/python')
     local_project_path = args.local_path
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
-    project_name = local_project_path.split('/')[-1]
+    project_name = os.path.split(local_project_path)[-1]
     url = ssh_user + '@' + hostname + ':' + str(ssh_port)
 
     ideConfig = {
@@ -160,15 +163,17 @@ def main():
 
     client = Client(args.hostname, args.ssh_user, args.ssh_password, args.ssh_port)
 
-    client.send_files(pkgutil.get_loader("decade").filename + '/remoteentry.py', remote_path + '/remoteentry.py')
+    client.send_files(os.path.join(pkgutil.get_loader("decade").filename, 'remoteentry.py'),
+                      os.path.join(remote_path, 'remoteentry.py'))
 
     if args.download:
         local_ide_mkdir_cmd = ['mkdir', '-p', local_project_path + remote_path]
         subprocess.call(local_ide_mkdir_cmd)
         client.fetch_files(remote_path, local_project_path)
 
-    elif not os.path.exists(local_project_path + remote_path + '/remoteentry.py'):
-        client.fetch_files(remote_path + '/remoteentry.py', local_project_path + remote_path + '/remoteentry.py')
+    elif not os.path.exists(os.path.join(local_project_path, remote_path, 'remoteentry.py')):
+        client.fetch_files(os.path.join(remote_path, 'remoteentry.py'),
+                           os.path.join(local_project_path, remote_path, 'remoteentry.py'))
 
     virtualenv_setup(remote_path, client, local_project_path)
 
@@ -176,8 +181,14 @@ def main():
         "The configuring process finished successfully. Open the project and start the debug server. Enter r if debug server started:")
     assert msg == 'r'
 
-    run_remote_cmd = 'python ' + remote_path + '/remoteentry.py' + ' --remote-path ' + remote_path + ' --src-entry ' + args.src_entry + ' --local-ip ' + local_ip + ' --local-port ' + str(
-        local_port)
+    run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --src-entry {src_entry} --local-ip {ip} --local-port {port}'.format(
+        **{
+            'remote_entry': os.path.join(remote_path, 'remoteentry.py'),
+            'remote_path': remote_path,
+            'src_entry': args.src_entry,
+            'ip': local_ip,
+            'port': local_port,
+        })
     client.execute(run_remote_cmd)
 
 
