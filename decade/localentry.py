@@ -1,13 +1,12 @@
-import os, sys
-import stat
-import subprocess
-import paramiko
+import os
 import xml.etree.ElementTree as et
 import argparse
 import pkgutil
 import shutil
 from common import get_host_ip, get_unoccupied_port
 from client import Client
+
+_REMOTE_ENTRY = 'remoteentry.py'
 
 
 def parse_args():
@@ -27,7 +26,7 @@ def parse_args():
     parser.add_argument("--ssh-port",
                         help="remote client ssh port", type=int, default=22)
     parser.add_argument("--local-path",
-                        help="project path on local server")
+                        help="project path on local server, will download from remote if not exist")
     parser.add_argument("--download",
                         help="download the whole source code of the project",
                         action='store_true',
@@ -57,7 +56,7 @@ def edit_config_files(f, file_location, local_path, args_list):
         for ele in root.iter(item['tag']):
             for attrib_key in item['attrib'].keys():
                 ele.set(attrib_key, item['attrib'][attrib_key])
-    init_config.write(os.path.join(local_path, '.idea/', f))
+    init_config.write(os.path.join(local_path, '.idea', f))
 
 
 def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
@@ -113,9 +112,9 @@ def IDE_config(args, remote_path, project_name, local_path, local_ip, local_port
                         if 'name' in option.attrib.keys() and option.get('name') == 'pathMappings':
                             # mappings = option.iter('mapping')
                             for mapping in option.iter('mapping'):
-                                mapping.set('local-root', '$PROJECT_DIR$' + remote_path)
+                                mapping.set('local-root', '$PROJECT_DIR$')
                                 mapping.set('remote-root', remote_path)
-    workspace_config.write(os.path.join(local_path, 'idea', 'workspace.xml'))
+    workspace_config.write(os.path.join(local_path, '.idea', 'workspace.xml'))
 
     # iml
     shutil.copyfile(os.path.join(pycharm_config_dir, 'try.iml'),
@@ -129,7 +128,6 @@ def main():
 
     hostname = args.hostname
     ssh_user = args.ssh_user
-    ssh_password = args.ssh_password
     ssh_port = args.ssh_port
 
     python_package = os.path.join(remote_path, 'venv/bin/python')
@@ -159,31 +157,31 @@ def main():
              'attrib': {'host': ssh_user + '@' + hostname, 'port': str(ssh_port), 'accessType': 'SFTP'}}
         ],
     }
-    IDE_config(ideConfig, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
     client = Client(args.hostname, args.ssh_user, args.ssh_password, args.ssh_port)
 
-    client.send_files(os.path.join(pkgutil.get_loader("decade").filename, 'remoteentry.py'),
-                      os.path.join(remote_path, 'remoteentry.py'))
+    client.send_files(os.path.join(pkgutil.get_loader("decade").filename, _REMOTE_ENTRY),
+                      os.path.join(remote_path, _REMOTE_ENTRY))
 
     if args.download:
-        local_ide_mkdir_cmd = ['mkdir', '-p', local_project_path + remote_path]
-        subprocess.call(local_ide_mkdir_cmd)
+        # If need to download the source code from remote, create the folder
         client.fetch_files(remote_path, local_project_path)
+    elif not os.path.exists(os.path.join(local_project_path, _REMOTE_ENTRY)):
+        client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
+                           os.path.join(local_project_path, _REMOTE_ENTRY))
 
-    elif not os.path.exists(os.path.join(local_project_path, remote_path, 'remoteentry.py')):
-        client.fetch_files(os.path.join(remote_path, 'remoteentry.py'),
-                           os.path.join(local_project_path, remote_path, 'remoteentry.py'))
+    IDE_config(ideConfig, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
     virtualenv_setup(remote_path, client, local_project_path)
 
+    # todo: use a loop and verify until the server is ready
     msg = raw_input(
         "The configuring process finished successfully. Open the project and start the debug server. Enter r if debug server started:")
     assert msg == 'r'
 
     run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --src-entry {src_entry} --local-ip {ip} --local-port {port}'.format(
         **{
-            'remote_entry': os.path.join(remote_path, 'remoteentry.py'),
+            'remote_entry': os.path.join(remote_path, _REMOTE_ENTRY),
             'remote_path': remote_path,
             'src_entry': args.src_entry,
             'ip': local_ip,

@@ -58,6 +58,8 @@ Go for debugging!
 ### Todo
 
 - Use env variables to store the local project path (so that we can store config in a shell script, a optional way to use the cmd easier)
+    - Give the content of the shell script, like the `~/.orca/env.sh`
+    - In the end of the shell script, call `source ./env.sh`, so that user just need to call one script when debugging on apps jenkins
 - Use `open -a PyCharm <project_path>` to open the PyCharm after script running
 - Support remote debugging in docker containers
 - Add unit test

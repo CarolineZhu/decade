@@ -15,6 +15,7 @@ class Client(object):
     """
     A client to wrap both ssh and docker client
     """
+
     def __init__(self, host, ssh_username=None, ssh_password=None, ssh_port=22):
         if ssh_username and ssh_password:
             self._ssh_client = paramiko.SSHClient()
@@ -43,10 +44,12 @@ class Client(object):
 
     def fetch_files(self, remote_path, local_path):
         if self._ssh_client:
-            # todo: call self._ssh_fetch_folder is remote_path is a folder
-            self._sftp.get(remote_path, local_path)
+            if stat.S_ISDIR(self._sftp.stat(remote_path).st_mode):
+                self._ssh_fetch_folder(remote_path, local_path)
+            else:
+                self._sftp.get(remote_path, local_path)
         else:
-            data, stat = self._docker_container.get_archive(remote_path)
+            data, _ = self._docker_container.get_archive(remote_path)
             # todo: save the date to local_path and unarchived it
 
     def _ssh_fetch_folder(self, remote_path, local_path):
