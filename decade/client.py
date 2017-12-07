@@ -30,8 +30,11 @@ class Client(object):
 
     def execute(self, command):
         if self._ssh_client:
-            pass
+            # Return (stdin, stdout, stderr) which are file-like objects
+            stdin, stdout, stderr = self._ssh_client.exec_command(command)
+            return stdin, stdout, stderr
         else:
+            # Return generator or str
             return self._docker_container.exec_run(command)
 
     def send_files(self, local_path, remote_path):

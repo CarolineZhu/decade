@@ -7,6 +7,7 @@ from common import get_host_ip, get_unoccupied_port
 from client import Client
 
 _REMOTE_ENTRY = 'remoteentry.py'
+_VIRTUAL_ENV_NAME = 'virtual_decade'
 
 
 def parse_args():
@@ -37,14 +38,14 @@ def parse_args():
 
 # setup virtualenv
 def setup_virtualenv(remote_path, client, local_project_path):
-    new_cmd = 'virtualenv venv'
+    new_cmd = 'virtualenv {0}'.format(_VIRTUAL_ENV_NAME)
     client.execute(new_cmd)
 
-    activate_cmd = 'source ./venv/bin/activate'
+    activate_cmd = 'source ./{0}/bin/activate'.format(_VIRTUAL_ENV_NAME)
     client.execute(activate_cmd)
 
     requirements_path = os.path.join(remote_path, 'requirements.txt')
-    if os.path.exists(os.path.join(local_project_path, remote_path, 'requirements.txt')):
+    if os.path.exists(os.path.join(local_project_path, 'requirements.txt')):
         config_cmd = 'pip install -r ' + requirements_path
         client.execute(config_cmd)
 
@@ -125,17 +126,14 @@ def main():
     args = parse_args()
     remote_path = args.remote_path
     server_name = args.server_name
-
-    hostname = args.hostname
-    ssh_user = args.ssh_user
     ssh_port = args.ssh_port
 
-    python_package = os.path.join(remote_path, 'venv/bin/python')
+    python_package = os.path.join(remote_path, _VIRTUAL_ENV_NAME, 'bin', 'python')
     local_project_path = args.local_path
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
     project_name = os.path.split(local_project_path)[-1]
-    url = ssh_user + '@' + hostname + ':' + str(ssh_port)
+    # url = ssh_user + '@' + hostname + ':' + str(ssh_port)
 
     ide_config = {
         "deployment": [
@@ -144,17 +142,11 @@ def main():
             {'tag': 'mapping', 'attrib': {'deploy': remote_path, 'local': '$PROJECT_DIR$' + remote_path}}
         ],
         "misc": [
-            {'tag': 'component', 'attrib': {'project-jdk-name':
-                                                'Remote Python 2.7.5 (ssh://' + url + python_package + ')'}},
         ],
         "remote-mappings": [
-            {'tag': 'remote-mappings', 'attrib': {'server-id': "python@ssh://" + url + python_package}},
             {'tag': 'mapping', 'attrib': {'local-root': '$PROJECT_DIR$' + remote_path, 'remote-root': remote_path}},
         ],
         "webServers": [
-            {'tag': 'webServer', 'attrib': {'name': server_name, 'url': 'http://' + ssh_user + '@' + hostname}},
-            {'tag': 'fileTransfer',
-             'attrib': {'host': ssh_user + '@' + hostname, 'port': str(ssh_port), 'accessType': 'SFTP'}}
         ],
     }
 
