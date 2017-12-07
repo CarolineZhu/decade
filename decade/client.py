@@ -9,6 +9,7 @@ import stat
 import docker
 import os
 import paramiko
+from common import tar_cz, tar_xz
 
 
 class Client(object):
@@ -26,7 +27,7 @@ class Client(object):
         else:
             self._ssh_client = None
             self._docker_client = docker.from_env()
-            self._docker_container = self._docker_client.get(host)
+            self._docker_container = self._docker_client.containers.get(host)
 
     def execute(self, command):
         if self._ssh_client:
@@ -41,19 +42,20 @@ class Client(object):
         if self._ssh_client:
             self._sftp.put(local_path, remote_path)
         else:
-            # todo: archive the folder
-            data = None
-            self._docker_container.put_archive(remote_path, data)
+            data = tar_cz(local_path)
+            self._docker_container.put_archive(os.path.dirname(remote_path), data)
 
     def fetch_files(self, remote_path, local_path):
+        assert os.path.exists(local_path)
+
         if self._ssh_client:
             if stat.S_ISDIR(self._sftp.stat(remote_path).st_mode):
-                self._ssh_fetch_folder(remote_path, local_path)
+                self._ssh_fetch_folder(remote_path, os.path.join(local_path, os.path.basename(remote_path)))
             else:
                 self._sftp.get(remote_path, local_path)
         else:
-            data, _ = self._docker_container.get_archive(remote_path)
-            # todo: save the date to local_path and unarchived it
+            response, _ = self._docker_container.get_archive(remote_path)
+            tar_xz(response.data, local_path)
 
     def _ssh_fetch_folder(self, remote_path, local_path):
         if not os.path.exists(local_path):

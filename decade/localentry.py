@@ -3,8 +3,10 @@ import xml.etree.ElementTree as et
 import argparse
 import pkgutil
 import shutil
+from subprocess import call
 from common import get_host_ip, get_unoccupied_port
 from client import Client
+import re
 
 _REMOTE_ENTRY = 'remoteentry.py'
 _VIRTUAL_ENV_NAME = 'virtual_decade'
@@ -37,16 +39,29 @@ def parse_args():
 
 
 # setup virtualenv
-def setup_virtualenv(remote_path, client, local_project_path):
+def setup_virtualenv(client, local_project_path, src_entry, remote_path):
     new_cmd = 'virtualenv {0}'.format(_VIRTUAL_ENV_NAME)
     client.execute(new_cmd)
 
     activate_cmd = 'source ./{0}/bin/activate'.format(_VIRTUAL_ENV_NAME)
     client.execute(activate_cmd)
 
-    requirements_path = os.path.join(remote_path, 'requirements.txt')
+    def _find_requirements_until_root(root_dir, sub_dir):
+        assert root_dir in sub_dir
+
+        if os.path.exists(os.path.join(sub_dir, 'requirements.txt')):
+            return os.path.join(sub_dir.replace(root_dir, ''), 'requirements.txt')
+        else:
+            return _find_requirements_until_root(root_dir, os.path.dirname(sub_dir))
+
+    # Install pydevd in remote
+    client.execute('pip install pydevd')
+
+    # Check the direct folder of the src entry file first, if no requirements.txt, then check the upper folder...
+    src_path = os.path.join(local_project_path, *re.split(r'[/\\]*', src_entry))
     if os.path.exists(os.path.join(local_project_path, 'requirements.txt')):
-        config_cmd = 'pip install -r ' + requirements_path
+        config_cmd = 'pip install -r {0}'.format(
+            os.path.join(remote_path, _find_requirements_until_root(local_project_path, src_path)))
         client.execute(config_cmd)
 
 
@@ -127,13 +142,10 @@ def main():
     remote_path = args.remote_path
     server_name = args.server_name
     ssh_port = args.ssh_port
-
-    python_package = os.path.join(remote_path, _VIRTUAL_ENV_NAME, 'bin', 'python')
     local_project_path = args.local_path
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
     project_name = os.path.split(local_project_path)[-1]
-    # url = ssh_user + '@' + hostname + ':' + str(ssh_port)
 
     ide_config = {
         "deployment": [
@@ -156,15 +168,18 @@ def main():
                       os.path.join(remote_path, _REMOTE_ENTRY))
 
     if args.download:
-        # If need to download the source code from remote, create the folder
         client.fetch_files(remote_path, local_project_path)
+        # If need to download the source code from remote, the project path need to append the project name
+        local_project_path = os.path.join(local_project_path, os.path.basename(remote_path))
     elif not os.path.exists(os.path.join(local_project_path, _REMOTE_ENTRY)):
         client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
                            os.path.join(local_project_path, _REMOTE_ENTRY))
 
     config_IDE(ide_config, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
-    setup_virtualenv(remote_path, client, local_project_path)
+    setup_virtualenv(client, local_project_path, args.src_entry, remote_path)
+
+    call(['open', '-a', 'PyCharm', local_project_path])
 
     # todo: use a loop and verify until the server is ready
     msg = raw_input(

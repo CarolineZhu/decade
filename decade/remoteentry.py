@@ -1,5 +1,8 @@
 import pydevd
 import argparse
+import os
+import re
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -17,5 +20,5 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     pydevd.settrace(args.local_ip, port=args.local_port, stdoutToServer=True, stderrToServer=True)
-    src_code = args.remote_path + '/' + args.src_entry
+    src_code = os.path.join(args.remote_path, *re.split(r'[/\\]*', args.src_entry))
     execfile(src_code)
