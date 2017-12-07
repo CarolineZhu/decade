@@ -7,6 +7,9 @@ from subprocess import call
 from common import get_host_ip, get_unoccupied_port
 from client import Client
 import re
+from colorama import init, Fore, Back, Style
+
+init()
 
 _REMOTE_ENTRY = 'remoteentry.py'
 _VIRTUAL_ENV_NAME = 'virtual_decade'
@@ -21,11 +24,11 @@ def parse_args():
     parser.add_argument("--server-name", default='hello',
                         help="ide webserver name")
     parser.add_argument("--hostname",
-                        help="remote client hostname")
+                        help="remote client hostname or docker container id")
     parser.add_argument("--ssh-user",
-                        help="remote client ssh user")
+                        help="remote client ssh user, do not set if is docker container")
     parser.add_argument("--ssh-password",
-                        help="remote client ssh password")
+                        help="remote client ssh password, do not set if is docker container")
     parser.add_argument("--ssh-port",
                         help="remote client ssh port", type=int, default=22)
     parser.add_argument("--local-path",
@@ -139,10 +142,12 @@ def config_IDE(args, remote_path, project_name, local_path, local_ip, local_port
 
 def main():
     args = parse_args()
-    remote_path = args.remote_path
+    remote_path = args.remote_path or os.environ.get('DECADE_REMOTE_PATH')
+    assert remote_path
     server_name = args.server_name
     ssh_port = args.ssh_port
-    local_project_path = args.local_path
+    local_project_path = args.local_path or os.environ.get('DECADE_LOCAL_PATH')
+    assert local_project_path
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
     project_name = os.path.split(local_project_path)[-1]
@@ -181,10 +186,10 @@ def main():
 
     call(['open', '-a', 'PyCharm', local_project_path])
 
-    # todo: use a loop and verify until the server is ready
     msg = raw_input(
-        "The configuring process finished successfully. Open the project and start the debug server. Enter r if debug server started:")
-    assert msg == 'r'
+        "Configuration done. Please start the debug server in PyCharm.\nEnter {0}/{1} if debug server started:".format(
+            Fore.RED + 'r' + Style.RESET_ALL, Fore.RED + 'ready' + Style.RESET_ALL))
+    assert msg in ['r', 'ready']
 
     run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --src-entry {src_entry} --local-ip {ip} --local-port {port}'.format(
         **{
