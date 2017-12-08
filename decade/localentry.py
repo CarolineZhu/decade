@@ -150,7 +150,7 @@ def main():
     assert local_project_path
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
-    project_name = os.path.split(local_project_path)[-1]
+    project_name = os.path.split(remote_path)[-1]
 
     ide_config = {
         "deployment": [
@@ -177,6 +177,7 @@ def main():
         # If need to download the source code from remote, the project path need to append the project name
         local_project_path = os.path.join(local_project_path, os.path.basename(remote_path))
     elif not os.path.exists(os.path.join(local_project_path, _REMOTE_ENTRY)):
+        local_project_path = os.path.join(local_project_path, os.path.basename(remote_path))
         client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
                            os.path.join(local_project_path, _REMOTE_ENTRY))
 
