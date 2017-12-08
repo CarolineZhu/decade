@@ -15,7 +15,9 @@ setup(
     packages = find_packages(),
     include_package_data = True,
     platforms = "any",
-    install_requires = ["paramiko"],
+    install_requires = ["paramiko",
+                        "docker",
+                        "colorama"],
     entry_points = {
         'console_scripts': ['decade = decade.localentry:main']
     }
