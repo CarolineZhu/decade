@@ -57,6 +57,30 @@ You can set breakpoints in your project as your wish.
 
 Go for debugging!
 
+### How it works
+
+#### Local side ####
+
+The main task of local side is configuring the PyCharm remote debug settings:
+
+1. Send the remote entry file to remote server;
+2. (Optional) Download the project code to local if it is not exist;
+3. Configure remote debugging settings for PyCharm in the local project;
+4. Configure python environment in remote server (see `1.` in #Remote side);
+5. Open PyCharm and wait for user starting the debug server;
+6. Start the python process in remote server.
+
+#### Remote side ####
+
+All the operations in the remote side are done by local side through ssh/docker sdk. So we only describe how the remote entry file works here.
+
+For `--start-script` option, as calling the python execution is out of our control, we need to do some hacks to inject the debug-required code. Here're the hacks:
+
+1. We hack the `python` command by alias it to something like `alias python='python <remote_entry>'`
+2. In `<remote_entry>`, we analyze the arguments and write the debug-required code into `sitecustomize.py` under python lib folder (see [https://stackoverflow.com/questions/32184440/making-python-run-a-few-lines-before-my-script](https://stackoverflow.com/questions/32184440/making-python-run-a-few-lines-before-my-script)).
+3. Finally, `<remote_entry>` will trigger a sub python process to execute according to input arguments.
+
+Above solution works in both native Python env or virtualenv, and even allow the start script creating/activating virtualenv in it!
 
 ### Todo
 
@@ -70,3 +94,5 @@ Go for debugging!
 - Use git to make sure the local code is the latest version (if local-path is exist)
 - Remove --download option, and download the code automatically if the local-path is not exist
 - Remove the query for if the debug server is ready (maybe can use a loop to see if the PyCharm process's binding port is right)
+- Write a pytest plugin to replace `remoteentry.py` for pytest runner
+- Print out remote stdout nicely
