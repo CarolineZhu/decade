@@ -4,9 +4,10 @@ import argparse
 import pkgutil
 import shutil
 from subprocess import call
-from common import get_host_ip, get_unoccupied_port
+from common import get_host_ip, get_unoccupied_port, check_if_bind
 from client import Client
 import re
+import socket
 from colorama import init, Fore, Back, Style
 
 init()
@@ -150,6 +151,7 @@ def main():
     assert local_project_path
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
+    print local_port
     project_name = os.path.split(remote_path)[-1]
 
     ide_config = {
@@ -187,10 +189,9 @@ def main():
 
     call(['open', '-a', 'PyCharm', local_project_path])
 
-    msg = raw_input(
-        "Configuration done. Please start the debug server in PyCharm.\nEnter {0}/{1} if debug server started:".format(
-            Fore.RED + 'r' + Style.RESET_ALL, Fore.RED + 'ready' + Style.RESET_ALL))
-    assert msg in ['r', 'ready']
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while not s.connect_ex((local_ip, int(local_port))):
+        pass
 
     run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --src-entry {src_entry} --local-ip {ip} --local-port {port}'.format(
         **{
