@@ -34,10 +34,6 @@ def parse_args():
                         help="remote client ssh port", type=int, default=22)
     parser.add_argument("--local-path",
                         help="project path on local server, will download from remote if not exist")
-    parser.add_argument("--download",
-                        help="download the whole source code of the project",
-                        action='store_true',
-                        default=False)
     arguments = parser.parse_args()
     return arguments
 
@@ -149,10 +145,11 @@ def main():
     ssh_port = args.ssh_port
     local_project_path = args.local_path or os.environ.get('DECADE_LOCAL_PATH')
     assert local_project_path
+    assert os.path.isdir(local_project_path), "local project path is not a directory."
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
     print local_port
-    project_name = os.path.split(remote_path)[-1]
+    project_name = os.path.basename(remote_path)
 
     ide_config = {
         "deployment": [
@@ -174,14 +171,16 @@ def main():
     client.send_files(os.path.join(pkgutil.get_loader("decade").filename, _REMOTE_ENTRY),
                       os.path.join(remote_path, _REMOTE_ENTRY))
 
-    if args.download:
+    # remove download
+    # remote project is placed in the local project path. Modify this for consistency
+    # local project path is empty
+    if len(os.listdir(local_project_path)) == 0:
         client.fetch_files(remote_path, local_project_path)
-        # If need to download the source code from remote, the project path need to append the project name
-        local_project_path = os.path.join(local_project_path, os.path.basename(remote_path))
-    elif not os.path.exists(os.path.join(local_project_path, _REMOTE_ENTRY)):
-        local_project_path = os.path.join(local_project_path, os.path.basename(remote_path))
+    # download remote entry
+    elif not os.path.exists(os.path.join(local_project_path, project_name, _REMOTE_ENTRY)):
         client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
-                           os.path.join(local_project_path, _REMOTE_ENTRY))
+                           os.path.join(local_project_path, project_name, _REMOTE_ENTRY))
+    local_project_path = os.path.join(local_project_path, project_name)
 
     config_IDE(ide_config, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
@@ -189,6 +188,7 @@ def main():
 
     call(['open', '-a', 'PyCharm', local_project_path])
 
+    # use a loop to check if the debugger started(if port is occupied).
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     while not s.connect_ex((local_ip, int(local_port))):
         pass

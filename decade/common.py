@@ -33,15 +33,6 @@ def get_unoccupied_port():
     return s.getsockname()[1]
 
 
-def check_if_bind(s, ip, port):
-    ret = s.connect_ex((ip, int(port)))
-    print ret
-    if not ret:
-        return True
-    else:
-        return False
-
-
 def tar_cz(*path):
     """tar_cz(*path) -> bytes
     Compress a sequence of files or directories in memory.
