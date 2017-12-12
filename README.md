@@ -42,6 +42,12 @@ Also support remote debug code in docker container (just leave `--ssh-user` and 
 decade --remote-path=/root/hello --entry=hello.py --server-name=hello --hostname=b294bc47bdc0 --local-path=/Users/rzhu/pytest_practice/try6
 ```
 
+Use an executable file outside the project as the entry (you may create a virtaulenv and start the python process in the executable file):
+
+```
+decade --remote-path=/root/hello --entry=/tmp/run_python.sh --server-name=hello --hostname=b294bc47bdc0 --local-path=/Users/rzhu/pytest_practice/try6
+```
+
 ### Configuring process finished
 
 When this message shows in terminal, 

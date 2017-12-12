@@ -20,9 +20,9 @@ def parse_args():
     parser.add_argument("--remote-path",
                         help="project path on remote client")
     parser.add_argument("--src-entry",
-                        help="the entry python file of source code")
-    parser.add_argument("--server-name", default='hello',
-                        help="ide webserver name")
+                        help="the entry python file of source code, or a executable file in the remote")
+    parser.add_argument("--server-name", default='decade',
+                        help="IDE server name (optional, default decade)")
     parser.add_argument("--hostname",
                         help="remote client hostname or docker container id")
     parser.add_argument("--ssh-user",
@@ -30,11 +30,11 @@ def parse_args():
     parser.add_argument("--ssh-password",
                         help="remote client ssh password, do not set if is docker container")
     parser.add_argument("--ssh-port",
-                        help="remote client ssh port", type=int, default=22)
+                        help="remote client ssh port (optional, default 22)", type=int, default=22)
     parser.add_argument("--local-path",
-                        help="project path on local server, will download from remote if not exist")
+                        help="project path on local server")
     parser.add_argument("--download",
-                        help="download the whole source code of the project",
+                        help="download the whole source code of the project to local",
                         action='store_true',
                         default=False)
     arguments = parser.parse_args()
