@@ -50,11 +50,13 @@ decade --remote-path=/root/hello --entry=/tmp/run_python.sh --server-name=hello 
 
 ### Configuring process finished
 
-When this message shows in terminal, 
+When this message shows in terminal
 ```
-The configuring process finished successfully. Open the project and start the debug server. Enter r if debug server started:
+Configuration done. Please start the debug server in PyCharm.
 ```
-Open the project with Pycharm. Click the debug button in the Pycharm to start the debug server. Enter 'r' if ready.
+and local project is opened by Pycharm, 
+
+Click the debug button in the Pycharm to start the debug server. Enter 'r'/'ready' if ready.
 
 Then the debugger will stop at the next line of 
 ```
@@ -103,6 +105,6 @@ Above solution works in both native Python env or virtualenv, and even allow the
 - ~~Use os.path.join instead of `+`~~
 - Use git to make sure the local code is the latest version (if local-path is exist)
 - Remove --download option, and download the code automatically if the local-path is not exist
-- Remove the query for if the debug server is ready (maybe can use a loop to see if the PyCharm process's binding port is right)
+- ~~Remove the query for if the debug server is ready (maybe can use a loop to see if the PyCharm process's binding port is right)~~
 - Print out remote stdout nicely
 - Support using a executable file as remote entry
