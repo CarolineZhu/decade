@@ -4,7 +4,8 @@ import argparse
 import pkgutil
 import shutil
 from subprocess import call
-from common import get_host_ip, get_unoccupied_port, check_if_bind
+import time
+from common import get_host_ip, get_unoccupied_port
 from client import Client
 import re
 import socket
@@ -143,9 +144,9 @@ def main():
     assert remote_path
     server_name = args.server_name
     ssh_port = args.ssh_port
-    local_project_path = args.local_path or os.environ.get('DECADE_LOCAL_PATH')
-    assert local_project_path
-    assert os.path.isdir(local_project_path), "local project path is not a directory."
+    local_path = args.local_path or os.environ.get('DECADE_LOCAL_PATH')
+    assert local_path
+    assert os.path.isdir(local_path), "local project path is not a directory."
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
     print local_port
@@ -174,13 +175,13 @@ def main():
     # remove download
     # remote project is placed in the local project path. Modify this for consistency
     # local project path is empty
-    if len(os.listdir(local_project_path)) == 0:
-        client.fetch_files(remote_path, local_project_path)
-    # download remote entry
-    elif not os.path.exists(os.path.join(local_project_path, project_name, _REMOTE_ENTRY)):
+    local_project_path = os.path.join(local_path, os.path.basename(remote_path))
+    if len(os.listdir(local_path)) == 0:
+        client.fetch_files(remote_path, local_path)
+        # If need to download the source code from remote, the project path need to append the project name
+    elif not os.path.exists(os.path.join(local_path, _REMOTE_ENTRY)):
         client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
-                           os.path.join(local_project_path, project_name, _REMOTE_ENTRY))
-    local_project_path = os.path.join(local_project_path, project_name)
+                           os.path.join(local_project_path, _REMOTE_ENTRY))
 
     config_IDE(ide_config, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
@@ -191,7 +192,7 @@ def main():
     # use a loop to check if the debugger started(if port is occupied).
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     while not s.connect_ex((local_ip, int(local_port))):
-        pass
+        time.sleep(1)
 
     run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --src-entry {src_entry} --local-ip {ip} --local-port {port}'.format(
         **{

@@ -46,16 +46,21 @@ class Client(object):
             self._docker_container.put_archive(os.path.dirname(remote_path), data)
 
     def fetch_files(self, remote_path, local_path):
-        assert os.path.exists(local_path)
+        """
+        :param remote_path: e.g. '/tmp/project/', '/tmp/debug.log'
+        :param local_path: e.g. '/tmp/project/', '/tmp/debug.log'
+        """
+        local_dir = os.path.dirname(local_path)
+        assert os.path.exists(local_dir)
 
         if self._ssh_client:
             if stat.S_ISDIR(self._sftp.stat(remote_path).st_mode):
-                self._ssh_fetch_folder(remote_path, os.path.join(local_path, os.path.basename(remote_path)))
+                self._ssh_fetch_folder(remote_path, os.path.join(local_dir, os.path.basename(remote_path)))
             else:
                 self._sftp.get(remote_path, local_path)
         else:
             response, _ = self._docker_container.get_archive(remote_path)
-            tar_xz(response.data, local_path)
+            tar_xz(response.data, local_dir)
 
     def _ssh_fetch_folder(self, remote_path, local_path):
         if not os.path.exists(local_path):
