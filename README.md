@@ -108,3 +108,4 @@ Above solution works in both native Python env or virtualenv, and even allow the
 - ~~Remove the query for if the debug server is ready (maybe can use a loop to see if the PyCharm process's binding port is right)~~
 - Print out remote stdout nicely
 - Support using a executable file as remote entry
+- Add path mapping for site packages (use --venv to specify local env path)
