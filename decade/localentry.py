@@ -35,6 +35,8 @@ def parse_args():
                         help="remote client ssh port (optional, default 22)", type=int, default=22)
     parser.add_argument("--local-path",
                         help="project path on local server, will download from remote if not exist")
+    parser.add_argument("--venv",
+                        help="specify virtualenv in local for package mapping, if not set, will use current python env")
     arguments = parser.parse_args()
     return arguments
 
@@ -149,7 +151,6 @@ def main():
     assert os.path.isdir(local_path), "local project path is not a directory."
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
-    print local_port
     project_name = os.path.basename(remote_path)
 
     ide_config = {
@@ -175,9 +176,9 @@ def main():
     # remove download
     # remote project is placed in the local project path. Modify this for consistency
     # local project path is empty
-    local_project_path = os.path.join(local_path, os.path.basename(remote_path))
-    if len(os.listdir(local_path)) == 0:
-        client.fetch_files(remote_path, local_path)
+    local_project_path = os.path.join(local_path, project_name)
+    if not os.path.exists(local_project_path):
+        client.fetch_files(remote_path, local_project_path)
         # If need to download the source code from remote, the project path need to append the project name
     elif not os.path.exists(os.path.join(local_path, _REMOTE_ENTRY)):
         client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
