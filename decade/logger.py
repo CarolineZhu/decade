@@ -105,7 +105,7 @@ class LogFormatter(logging.Formatter):
         else:
             record.color = record.end_color = ''
 
-        space_number = 15 - len(record.name)
+        space_number = 12 - len(record.name)
         record.empty = '' if space_number <= 0 else ' ' * space_number
 
         formatted = self._fmt % record.__dict__
@@ -124,7 +124,7 @@ class LogFormatter(logging.Formatter):
         return formatted.replace("\n", "\n    ")
 
 
-def setup_logger(name=None, level=logging.DEBUG, color=None):
+def setup_logger(name=None, color=None, level=logging.DEBUG):
     _logger = logging.getLogger(name or __name__)
     _logger.propagate = False
     _logger.setLevel(level)

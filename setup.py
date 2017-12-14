@@ -17,7 +17,8 @@ setup(
     platforms = "any",
     install_requires = ["paramiko",
                         "docker",
-                        "colorama"],
+                        "colorama",
+                        "psutil"],
     entry_points = {
         'console_scripts': ['decade = decade.localentry:main']
     }

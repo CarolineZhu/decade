@@ -5,16 +5,19 @@ import pkgutil
 import shutil
 from subprocess import call
 import time
-from common import get_host_ip, get_unoccupied_port
+from common import get_host_ip, get_unoccupied_port, is_port_in_use, get_pid_by_name
 from client import Client
 import re
-import socket
+import psutil
 from colorama import init, Fore, Back, Style
+from logger import setup_logger
+
 
 init()
 
 _REMOTE_ENTRY = 'remoteentry.py'
 _VIRTUAL_ENV_NAME = 'virtual_decade'
+_LOGGER = setup_logger('Main', color=Fore.BLUE)
 
 
 def parse_args():
@@ -190,10 +193,19 @@ def main():
 
     call(['open', '-a', 'PyCharm', local_project_path])
 
+    _LOGGER.info('Please start the debug server in the PyCharm to continue')
+
     # use a loop to check if the debugger started(if port is occupied).
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while not s.connect_ex((local_ip, int(local_port))):
-        time.sleep(1)
+    while 1:
+        port_open = False
+        pid_list = get_pid_by_name('pycharm')
+        for pid in pid_list:
+            port_open = port_open or is_port_in_use(pid, local_port)
+        if port_open:
+            break
+        _LOGGER.info('Still waiting...')
+        time.sleep(10)
+    _LOGGER.info('Detect the debugging port is open, ready to start')
 
     run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --src-entry {src_entry} --local-ip {ip} --local-port {port}'.format(
         **{
