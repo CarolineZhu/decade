@@ -8,6 +8,7 @@
 import socket
 import tarfile
 import os
+import psutil
 
 try:
     from cStringIO import StringIO as BIO
@@ -31,6 +32,22 @@ def get_unoccupied_port():
     s.bind(('', 0))
 
     return s.getsockname()[1]
+
+
+def get_pid_by_name(name):
+    pid = []
+    for p in psutil.process_iter():
+        if hasattr(p, 'name') and p.name() == name:
+            pid.append(p.pid)
+    return pid
+
+
+def is_port_in_use(pid, port):
+    p = psutil.Process(pid)
+    for conn in p.connections():
+        if conn.laddr[1] == port:
+            return True
+    return False
 
 
 def tar_cz(*path):
