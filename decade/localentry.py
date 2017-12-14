@@ -8,7 +8,6 @@ import time
 from common import get_host_ip, get_unoccupied_port, is_port_in_use, get_pid_by_name
 from client import Client
 import re
-import psutil
 from colorama import init, Fore, Back, Style
 from logger import setup_logger
 
@@ -24,7 +23,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--remote-path",
                         help="project path on remote client")
-    parser.add_argument("--src-entry",
+    parser.add_argument("--entry",
                         help="the entry python file of source code, or a executable file in the remote")
     parser.add_argument("--server-name", default='decade',
                         help="IDE server name (optional, default decade)")
@@ -132,7 +131,6 @@ def config_IDE(args, remote_path, project_name, local_path, local_ip, local_port
                         if 'name' in option.attrib.keys() and option.get('name') == 'HOST':
                             option.set('value', local_ip)
                         if 'name' in option.attrib.keys() and option.get('name') == 'pathMappings':
-                            # mappings = option.iter('mapping')
                             for mapping in option.iter('mapping'):
                                 mapping.set('local-root', '$PROJECT_DIR$')
                                 mapping.set('remote-root', remote_path)
@@ -189,7 +187,7 @@ def main():
 
     config_IDE(ide_config, remote_path, project_name, local_project_path, local_ip, local_port, ssh_port)
 
-    setup_virtualenv(client, local_project_path, args.src_entry, remote_path)
+    setup_virtualenv(client, local_project_path, args.entry, remote_path)
 
     call(['open', '-a', 'PyCharm', local_project_path])
 
@@ -207,11 +205,11 @@ def main():
         time.sleep(10)
     _LOGGER.info('Detect the debugging port is open, ready to start')
 
-    run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --src-entry {src_entry} --local-ip {ip} --local-port {port}'.format(
+    run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --entry {entry} --local-ip {ip} --local-port {port}'.format(
         **{
             'remote_entry': os.path.join(remote_path, _REMOTE_ENTRY),
             'remote_path': remote_path,
-            'src_entry': args.src_entry,
+            'entry': args.entry,
             'ip': local_ip,
             'port': local_port,
         })

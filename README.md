@@ -106,6 +106,6 @@ Above solution works in both native Python env or virtualenv, and even allow the
 - Use git to make sure the local code is the latest version (if local-path is exist)
 - Remove --download option, and download the code automatically if the local-path is not exist
 - ~~Remove the query for if the debug server is ready (maybe can use a loop to see if the PyCharm process's binding port is right)~~
-- Print out remote stdout nicely
+- ~~Print out remote stdout nicely~~
 - Support using a executable file as remote entry
 - Add path mapping for site packages (use --venv to specify local env path)

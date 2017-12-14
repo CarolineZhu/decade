@@ -8,7 +8,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--remote-path",
                         help="project path on remote client")
-    parser.add_argument("--src-entry",
+    parser.add_argument("--entry",
                         help="the entry python file of source code")
     parser.add_argument("--local-ip",
                         help="local server ip address")
@@ -19,6 +19,6 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    src_code = os.path.join(args.remote_path, *re.split(r'[/\\]*', args.entry))
     pydevd.settrace(args.local_ip, port=args.local_port, stdoutToServer=True, stderrToServer=True)
-    src_code = os.path.join(args.remote_path, *re.split(r'[/\\]*', args.src_entry))
     execfile(src_code)
