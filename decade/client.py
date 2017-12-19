@@ -56,10 +56,33 @@ class Client(object):
     def send_files(self, local_path, remote_path):
         _LOGGER.info('sending files from {0} (local) to {1} (remote)'.format(local_path, remote_path))
         if self._ssh_client:
-            self._sftp.put(local_path, remote_path)
+            if os.path.isdir(local_path):
+                self._ssh_send_folder(local_path, remote_path)
+            else:
+                self._sftp.put(local_path, remote_path)
         else:
             data = tar_cz(local_path)
             self._docker_container.put_archive(os.path.dirname(remote_path), data)
+
+    def _ssh_send_folder(self, local_path, remote_path):
+        self._ssh_mkdir(remote_path, ignore_existing=True)
+
+        for item in os.listdir(local_path):
+            if os.path.isfile(os.path.join(local_path, item)):
+                self._sftp.put(os.path.join(local_path, item), '%s/%s' % (remote_path, item))
+            else:
+                self._ssh_mkdir('%s/%s' % (remote_path, item), ignore_existing=True)
+                self._ssh_send_folder(os.path.join(local_path, item), '%s/%s' % (remote_path, item))
+
+    def _ssh_mkdir(self, path, mode=511, ignore_existing=False):
+        ''' Augments mkdir by adding an option to not fail if the folder exists  '''
+        try:
+            self._sftp.mkdir(path, mode)
+        except IOError:
+            if ignore_existing:
+                pass
+            else:
+                raise
 
     def fetch_files(self, remote_path, local_path):
         """
