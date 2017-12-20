@@ -11,6 +11,7 @@ import re
 import psutil
 from colorama import init, Fore, Back, Style
 from logger import setup_logger
+from git import Repo
 
 
 init()
@@ -81,13 +82,32 @@ def edit_config_files(f, file_location, local_path, args_list):
     init_config.write(os.path.join(local_path, '.idea', f))
 
 
+def git_check_version(local_project_path):
+    if '.git' not in os.listdir(local_project_path):
+        repo = Repo.init(local_project_path, bare=False)
+    else:
+        repo = Repo(local_project_path)
+
+    origin = repo.remote()
+    if repo.is_dirty():
+        repo.git.stash('save')
+        origin.fetch()
+        origin.pull()
+
+
 def config_IDE(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
     local_idea_path = os.path.join(local_path, '.idea')
-    if not os.path.exists(local_idea_path):
-        os.mkdir(local_idea_path)
-    else:
+
+    if os.path.exists(local_idea_path):
         shutil.rmtree(local_idea_path)
-        os.mkdir(local_idea_path)
+    git_check_version(local_path)
+    os.mkdir(local_idea_path)
+
+    # if not os.path.exists(local_idea_path):
+    #     os.mkdir(local_idea_path)
+    # else:
+    #     shutil.rmtree(local_idea_path)
+    #     os.mkdir(local_idea_path)
 
     script_path = pkgutil.get_loader("decade").filename
     print script_path
@@ -180,10 +200,11 @@ def main():
     # remote project is placed in the local project path. Modify this for consistency
     # local project path is empty
     local_project_path = os.path.join(local_path, project_name)
+
     if not os.path.exists(local_project_path):
         client.fetch_files(remote_path, local_project_path)
         # If need to download the source code from remote, the project path need to append the project name
-    elif not os.path.exists(os.path.join(local_path, _REMOTE_ENTRY)):
+    elif not os.path.exists(os.path.join(local_project_path, _REMOTE_ENTRY)):
         client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
                            os.path.join(local_project_path, _REMOTE_ENTRY))
 
