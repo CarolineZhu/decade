@@ -12,6 +12,7 @@ import psutil
 from colorama import init, Fore, Back, Style
 from logger import setup_logger
 from git import Repo
+import git
 
 
 init()
@@ -87,6 +88,12 @@ def git_check_version(local_project_path):
         repo = Repo.init(local_project_path, bare=False)
     else:
         repo = Repo(local_project_path)
+
+    commits_ahead = repo.iter_commits('origin/' + repo.active_branch.name + '..' + repo.active_branch.name)
+    count_ahead = sum(1 for c in commits_ahead)
+    if count_ahead:
+        current_head = git.refs.head.HEAD(repo, path='HEAD')
+        git.refs.head.HEAD.reset(current_head, commit='HEAD~' + str(count_ahead))
 
     origin = repo.remote()
     if repo.is_dirty():
