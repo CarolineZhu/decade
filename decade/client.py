@@ -85,6 +85,6 @@ class Client(object):
 
         for f in self._sftp.listdir(remote_path):
             if stat.S_ISDIR(self._sftp.stat(os.path.join(remote_path, f)).st_mode):
-                self._ssh_fetch_folder(os.path.join(remote_path, f), local_path)
+                self._ssh_fetch_folder(os.path.join(remote_path, f), os.path.join(local_path, f))
             else:
                 self._sftp.get(os.path.join(remote_path, f), os.path.join(local_path, f))
