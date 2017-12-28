@@ -10,6 +10,8 @@ from client import Client
 import re
 from colorama import init, Fore, Back, Style
 from logger import setup_logger
+from git import Repo
+import git
 
 init()
 
@@ -86,13 +88,38 @@ def edit_config_files(f, file_location, local_path, args_list):
     init_config.write(os.path.join(local_path, '.idea', f))
 
 
+def git_check_version(local_project_path):
+    if '.git' not in os.listdir(local_project_path):
+        repo = Repo.init(local_project_path, bare=False)
+    else:
+        repo = Repo(local_project_path)
+
+    commits_ahead = repo.iter_commits('origin/' + repo.active_branch.name + '..' + repo.active_branch.name)
+    count_ahead = sum(1 for c in commits_ahead)
+    if count_ahead:
+        current_head = git.refs.head.HEAD(repo, path='HEAD')
+        git.refs.head.HEAD.reset(current_head, commit='HEAD~' + str(count_ahead))
+
+    origin = repo.remote()
+    if repo.is_dirty():
+        repo.git.stash('save')
+        origin.fetch()
+        origin.pull()
+
+
 def config_IDE(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
     local_idea_path = os.path.join(local_path, '.idea')
-    if not os.path.exists(local_idea_path):
-        os.mkdir(local_idea_path)
-    else:
+
+    if os.path.exists(local_idea_path):
         shutil.rmtree(local_idea_path)
-        os.mkdir(local_idea_path)
+    git_check_version(local_path)
+    os.mkdir(local_idea_path)
+
+    # if not os.path.exists(local_idea_path):
+    #     os.mkdir(local_idea_path)
+    # else:
+    #     shutil.rmtree(local_idea_path)
+    #     os.mkdir(local_idea_path)
 
     script_path = pkgutil.get_loader("decade").filename
     print script_path
@@ -183,6 +210,7 @@ def main():
     # remote project is placed in the local project path. Modify this for consistency
     # local project path is empty
     local_project_path = os.path.join(local_path, project_name)
+
     if not os.path.exists(local_project_path):
         client.fetch_files(remote_path, local_project_path)
 
