@@ -4,15 +4,22 @@ import argparse
 import pkgutil
 import shutil
 from subprocess import call
-from common import get_host_ip, get_unoccupied_port
+import time
+from common import get_host_ip, get_unoccupied_port, is_port_in_use, get_pid_by_name
 from client import Client
 import re
+import psutil
 from colorama import init, Fore, Back, Style
+from logger import setup_logger
+from git import Repo
+import git
+
 
 init()
 
 _REMOTE_ENTRY = 'remoteentry.py'
 _VIRTUAL_ENV_NAME = 'virtual_decade'
+_LOGGER = setup_logger('Main', color=Fore.BLUE)
 
 
 def parse_args():
@@ -20,9 +27,9 @@ def parse_args():
     parser.add_argument("--remote-path",
                         help="project path on remote client")
     parser.add_argument("--src-entry",
-                        help="the entry python file of source code")
-    parser.add_argument("--server-name", default='hello',
-                        help="ide webserver name")
+                        help="the entry python file of source code, or a executable file in the remote")
+    parser.add_argument("--server-name", default='decade',
+                        help="IDE server name (optional, default decade)")
     parser.add_argument("--hostname",
                         help="remote client hostname or docker container id")
     parser.add_argument("--ssh-user",
@@ -30,13 +37,11 @@ def parse_args():
     parser.add_argument("--ssh-password",
                         help="remote client ssh password, do not set if is docker container")
     parser.add_argument("--ssh-port",
-                        help="remote client ssh port", type=int, default=22)
+                        help="remote client ssh port (optional, default 22)", type=int, default=22)
     parser.add_argument("--local-path",
                         help="project path on local server, will download from remote if not exist")
-    parser.add_argument("--download",
-                        help="download the whole source code of the project",
-                        action='store_true',
-                        default=False)
+    parser.add_argument("--venv",
+                        help="specify virtualenv in local for package mapping, if not set, will use current python env")
     arguments = parser.parse_args()
     return arguments
 
@@ -78,13 +83,38 @@ def edit_config_files(f, file_location, local_path, args_list):
     init_config.write(os.path.join(local_path, '.idea', f))
 
 
+def git_check_version(local_project_path):
+    if '.git' not in os.listdir(local_project_path):
+        repo = Repo.init(local_project_path, bare=False)
+    else:
+        repo = Repo(local_project_path)
+
+    commits_ahead = repo.iter_commits('origin/' + repo.active_branch.name + '..' + repo.active_branch.name)
+    count_ahead = sum(1 for c in commits_ahead)
+    if count_ahead:
+        current_head = git.refs.head.HEAD(repo, path='HEAD')
+        git.refs.head.HEAD.reset(current_head, commit='HEAD~' + str(count_ahead))
+
+    origin = repo.remote()
+    if repo.is_dirty():
+        repo.git.stash('save')
+        origin.fetch()
+        origin.pull()
+
+
 def config_IDE(args, remote_path, project_name, local_path, local_ip, local_port, ssh_port):
     local_idea_path = os.path.join(local_path, '.idea')
-    if not os.path.exists(local_idea_path):
-        os.mkdir(local_idea_path)
-    else:
+
+    if os.path.exists(local_idea_path):
         shutil.rmtree(local_idea_path)
-        os.mkdir(local_idea_path)
+    git_check_version(local_path)
+    os.mkdir(local_idea_path)
+
+    # if not os.path.exists(local_idea_path):
+    #     os.mkdir(local_idea_path)
+    # else:
+    #     shutil.rmtree(local_idea_path)
+    #     os.mkdir(local_idea_path)
 
     script_path = pkgutil.get_loader("decade").filename
     print script_path
@@ -146,11 +176,12 @@ def main():
     assert remote_path
     server_name = args.server_name
     ssh_port = args.ssh_port
-    local_project_path = args.local_path or os.environ.get('DECADE_LOCAL_PATH')
-    assert local_project_path
+    local_path = args.local_path or os.environ.get('DECADE_LOCAL_PATH')
+    assert local_path
+    assert os.path.isdir(local_path), "local project path is not a directory."
     local_ip = get_host_ip()
     local_port = get_unoccupied_port()
-    project_name = os.path.split(local_project_path)[-1]
+    project_name = os.path.basename(remote_path)
 
     ide_config = {
         "deployment": [
@@ -172,10 +203,14 @@ def main():
     client.send_files(os.path.join(pkgutil.get_loader("decade").filename, _REMOTE_ENTRY),
                       os.path.join(remote_path, _REMOTE_ENTRY))
 
-    if args.download:
+    # remove download
+    # remote project is placed in the local project path. Modify this for consistency
+    # local project path is empty
+    local_project_path = os.path.join(local_path, project_name)
+
+    if not os.path.exists(local_project_path):
         client.fetch_files(remote_path, local_project_path)
         # If need to download the source code from remote, the project path need to append the project name
-        local_project_path = os.path.join(local_project_path, os.path.basename(remote_path))
     elif not os.path.exists(os.path.join(local_project_path, _REMOTE_ENTRY)):
         client.fetch_files(os.path.join(remote_path, _REMOTE_ENTRY),
                            os.path.join(local_project_path, _REMOTE_ENTRY))
@@ -186,10 +221,19 @@ def main():
 
     call(['open', '-a', 'PyCharm', local_project_path])
 
-    msg = raw_input(
-        "Configuration done. Please start the debug server in PyCharm.\nEnter {0}/{1} if debug server started:".format(
-            Fore.RED + 'r' + Style.RESET_ALL, Fore.RED + 'ready' + Style.RESET_ALL))
-    assert msg in ['r', 'ready']
+    _LOGGER.info('Please start the debug server in the PyCharm to continue')
+
+    # use a loop to check if the debugger started(if port is occupied).
+    while 1:
+        port_open = False
+        pid_list = get_pid_by_name('pycharm')
+        for pid in pid_list:
+            port_open = port_open or is_port_in_use(pid, local_port)
+        if port_open:
+            break
+        _LOGGER.info('Still waiting...')
+        time.sleep(10)
+    _LOGGER.info('Detect the debugging port is open, ready to start')
 
     run_remote_cmd = 'python {remote_entry} --remote-path {remote_path} --src-entry {src_entry} --local-ip {ip} --local-port {port}'.format(
         **{

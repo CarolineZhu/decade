@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "decade",
-    version = "0.1.2",
+    version = "0.2.2",
     keywords = ("pip", "decade", "rzhu"),
     description = "debug configurator sdk",
     long_description = "Pycharm remote debug auto configurator sdk",
@@ -17,7 +17,8 @@ setup(
     platforms = "any",
     install_requires = ["paramiko",
                         "docker",
-                        "colorama"],
+                        "colorama",
+                        "psutil"],
     entry_points = {
         'console_scripts': ['decade = decade.localentry:main']
     }

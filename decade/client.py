@@ -10,6 +10,10 @@ import docker
 import os
 import paramiko
 from common import tar_cz, tar_xz
+from logger import setup_logger
+from colorama import Fore
+
+_LOGGER = setup_logger('Client', color=Fore.CYAN)
 
 
 class Client(object):
@@ -30,15 +34,27 @@ class Client(object):
             self._docker_container = self._docker_client.containers.get(host)
 
     def execute(self, command):
+        _LOGGER.info('executing command: {0}'.format(command))
         if self._ssh_client:
             # Return (stdin, stdout, stderr) which are file-like objects
             stdin, stdout, stderr = self._ssh_client.exec_command(command)
+            stdout = ''.join(stdout.readlines())
+            _LOGGER.info('stdout: \n{0}'.format(stdout))
             return stdin, stdout, stderr
         else:
             # Return generator or str
-            return self._docker_container.exec_run(command)
+            result = self._docker_container.exec_run(command)
+            if isinstance(result, str):
+                stdout = result
+            else:
+                stdout = ''
+                for line in result:
+                    stdout += line + '\n'
+            _LOGGER.info('stdout: \n{0}'.format(stdout))
+            return result
 
     def send_files(self, local_path, remote_path):
+        _LOGGER.info('sending files from {0} (local) to {1} (remote)'.format(local_path, remote_path))
         if self._ssh_client:
             self._sftp.put(local_path, remote_path)
         else:
@@ -46,16 +62,22 @@ class Client(object):
             self._docker_container.put_archive(os.path.dirname(remote_path), data)
 
     def fetch_files(self, remote_path, local_path):
-        assert os.path.exists(local_path)
+        """
+        :param remote_path: e.g. '/tmp/project/', '/tmp/debug.log'
+        :param local_path: e.g. '/tmp/project/', '/tmp/debug.log'
+        """
+        _LOGGER.info('fetching files from {0} (remote) to {1} (local)'.format(remote_path, local_path))
+        local_dir = os.path.dirname(local_path)
+        assert os.path.exists(local_dir)
 
         if self._ssh_client:
             if stat.S_ISDIR(self._sftp.stat(remote_path).st_mode):
-                self._ssh_fetch_folder(remote_path, os.path.join(local_path, os.path.basename(remote_path)))
+                self._ssh_fetch_folder(remote_path, os.path.join(local_dir, os.path.basename(remote_path)))
             else:
                 self._sftp.get(remote_path, local_path)
         else:
             response, _ = self._docker_container.get_archive(remote_path)
-            tar_xz(response.data, local_path)
+            tar_xz(response.data, local_dir)
 
     def _ssh_fetch_folder(self, remote_path, local_path):
         if not os.path.exists(local_path):
@@ -63,6 +85,6 @@ class Client(object):
 
         for f in self._sftp.listdir(remote_path):
             if stat.S_ISDIR(self._sftp.stat(os.path.join(remote_path, f)).st_mode):
-                self._ssh_fetch_folder(os.path.join(remote_path, f), local_path)
+                self._ssh_fetch_folder(os.path.join(remote_path, f), os.path.join(local_path, f))
             else:
                 self._sftp.get(os.path.join(remote_path, f), os.path.join(local_path, f))
